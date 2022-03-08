@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import classes from 'styles/home.module.css'
+import { CheckPosition, Direction, Robot } from 'src/types'
+import { objects, robotMemory, robotMovement } from 'src/types/enums'
 
 const TILE_AREA = 64
 const NUM_TILE = 8
@@ -9,62 +11,29 @@ const NUM_TILE = 8
 const CANVAS_AREA = TILE_AREA * NUM_TILE
 const DEFAULT_SPEED = 64
 
-enum robotMovement {
-  forward,
-  backward,
-  left,
-  right,
+let robot: Robot = {
+  direction: robotMovement.none,
+  xPosition: 0,
+  yPosition: 0,
+  xSpeed: 0,
+  ySpeed: 0,
+  image: null,
+  area: 60,
 }
-
-enum robotMemory {
-  go = 0,
-  avoid,
-  alreadyWalked,
-}
-
-enum objects {
-  empty = 0,
-  wall,
-  dust,
-  furniture,
-}
-
-let robotDirection = robotMovement.forward
-
-let xPosition = 0
-let yPosition = 0
-let xSpeed = 0
-let ySpeed = -DEFAULT_SPEED
-
-let vacuumImage: HTMLImageElement | null = null
-let vacuumArea = 60
 
 let dustImage: HTMLImageElement | null = null
-let dustArea = 25
 
 const world: number[][] = []
 const robotMemoryMap: number[][] = []
 
 let interval = {} as NodeJS.Timeout
 
-const getXPosition = (canvasWidth: number) => canvasWidth
-const getYPosition = (canvasHeight: number) => canvasHeight
-
-const resetGame = (canvas: HTMLCanvasElement) => {
-  xPosition = getXPosition(canvas.width)
-  yPosition = getYPosition(canvas.height)
-  xSpeed = 0
-  ySpeed = -DEFAULT_SPEED
-}
-
 const setupCanvas = (canvas: HTMLCanvasElement) => {
-  // canvas.width = window.innerWidth
-  // canvas.height = window.innerHeight
   canvas.width = CANVAS_AREA
   canvas.height = CANVAS_AREA
 
-  xPosition = getXPosition(canvas.width)
-  yPosition = getYPosition(canvas.height)
+  robot.xPosition = canvas.width - robot.area
+  robot.yPosition = canvas.height - robot.area
 
   return canvas.getContext('2d')
 }
@@ -85,9 +54,10 @@ const loadWorld = () => {
     for (let j = 0; j < NUM_TILE; j++) {
       world[i][j] = objects.empty
       if (Math.random() > 0.9) world[i][j] = objects.dust
+      if (Math.random() > 0.9) world[i][j] = objects.furniture
+      if (i === 0 || j === 0 || i === 7 || j === 7) world[i][j] = objects.wall
     }
   }
-  world[7][5] = objects.furniture
   console.log({ world })
 }
 
@@ -95,8 +65,8 @@ const loadVacuumImage = () => {
   const vacuumImageElement = new Image()
   vacuumImageElement.src = '/assets/vacuum.png'
   vacuumImageElement.onload = () => {
-    vacuumImage = vacuumImageElement
-    vacuumArea = vacuumImageElement.width
+    robot.image = vacuumImageElement
+    robot.area = vacuumImageElement.width
   }
 }
 
@@ -105,7 +75,6 @@ const loadDustImage = () => {
   dustImageElement.src = '/assets/dust.png'
   dustImageElement.onload = () => {
     dustImage = dustImageElement
-    dustArea = dustImageElement.width
   }
 }
 
@@ -117,6 +86,20 @@ const drawWorld = (ctx: CanvasRenderingContext2D) => {
           if (!dustImage) return
           ctx.drawImage(dustImage, i * TILE_AREA, j * TILE_AREA, TILE_AREA / 2, TILE_AREA / 2)
           break
+        case objects.wall:
+          ctx.beginPath()
+          ctx.rect(i * TILE_AREA, j * TILE_AREA, TILE_AREA, TILE_AREA)
+          ctx.fillStyle = '#000'
+          ctx.fill()
+          ctx.closePath()
+          break
+        case objects.furniture:
+          ctx.beginPath()
+          ctx.rect(i * TILE_AREA, j * TILE_AREA, TILE_AREA, TILE_AREA)
+          ctx.fillStyle = '#0095DD'
+          ctx.fill()
+          ctx.closePath()
+          break
         default:
           break
       }
@@ -124,20 +107,111 @@ const drawWorld = (ctx: CanvasRenderingContext2D) => {
   }
 }
 
-const drawFurniture = (ctx: CanvasRenderingContext2D) => {
-  ctx.beginPath()
-  ctx.rect(7 * TILE_AREA, 5 * TILE_AREA, TILE_AREA, TILE_AREA)
-  ctx.fillStyle = '#0095DD'
-  ctx.fill()
-  ctx.closePath()
-}
-
 const drawRobot = (ctx: CanvasRenderingContext2D) => {
-  if (!vacuumImage) return
-  ctx.drawImage(vacuumImage, xPosition - vacuumArea, yPosition - vacuumArea)
+  if (!robot.image) return
+  ctx.drawImage(robot.image, robot.xPosition - robot.area, robot.yPosition - robot.area)
 }
 
-const checkIsFree = (positionValue: number) => [objects.empty, objects.dust].includes(positionValue)
+const checkIsFree = (position: CheckPosition, canAlreadyWalked = false) => {
+  const worldPositionValue = world[position.x][position.y]
+  const robotMemoryPositionValue = robotMemoryMap[position.x][position.y]
+  if (
+    [objects.empty, objects.dust].includes(worldPositionValue) &&
+    (robotMemory.go === robotMemoryPositionValue || canAlreadyWalked)
+  )
+    return true
+  else {
+    robotMemoryMap[position.x][position.y] = robotMemory.avoid
+    return false
+  }
+}
+
+const getPositions = () => {
+  const { xTilePosition, yTilePosition } = getTilePosition()
+  const topPosition: CheckPosition = { x: xTilePosition, y: yTilePosition - 1, direction: 'top' }
+  const bottomPosition: CheckPosition = { x: xTilePosition, y: yTilePosition + 1, direction: 'bottom' }
+  const leftPosition: CheckPosition = { x: xTilePosition - 1, y: yTilePosition, direction: 'left' }
+  const rightPosition: CheckPosition = { x: xTilePosition + 1, y: yTilePosition, direction: 'right' }
+  return { topPosition, bottomPosition, leftPosition, rightPosition }
+}
+
+const getTilePosition = () => {
+  const xTilePosition = Math.floor(robot.xPosition / TILE_AREA) - 1
+  const yTilePosition = Math.floor(robot.yPosition / TILE_AREA) - 1
+  return { xTilePosition, yTilePosition }
+}
+
+const handleGo = (direction: Direction) => {
+  const { xTilePosition, yTilePosition } = getTilePosition()
+  const directionsValues = {
+    top: {
+      direction: robotMovement.forward,
+      xSpeed: 0,
+      ySpeed: -DEFAULT_SPEED,
+    },
+    right: {
+      direction: robotMovement.right,
+      xSpeed: DEFAULT_SPEED,
+      ySpeed: 0,
+    },
+    bottom: {
+      direction: robotMovement.backward,
+      xSpeed: 0,
+      ySpeed: DEFAULT_SPEED,
+    },
+    left: {
+      direction: robotMovement.left,
+      xSpeed: -DEFAULT_SPEED,
+      ySpeed: 0,
+    },
+    none: {
+      direction: robotMovement.none,
+      xSpeed: 0,
+      ySpeed: 0,
+    },
+  }
+
+  const directionValue = directionsValues[direction]
+  robot.direction = directionValue.direction
+  robotMemoryMap[xTilePosition][yTilePosition] = robotMemory.alreadyWalked
+  robot.xSpeed = directionValue.xSpeed
+  robot.ySpeed = directionValue.ySpeed
+}
+
+const goBack = () => {
+  const { topPosition, bottomPosition, leftPosition, rightPosition } = getPositions()
+
+  switch (robot.direction) {
+    case robotMovement.forward: {
+      if (checkIsFree(bottomPosition, true)) handleGo('bottom')
+      else handleGo('none')
+      break
+    }
+    case robotMovement.backward: {
+      if (checkIsFree(topPosition, true)) handleGo('top')
+      else handleGo('none')
+      break
+    }
+    case robotMovement.left: {
+      if (checkIsFree(rightPosition, true)) handleGo('right')
+      else handleGo('none')
+      break
+    }
+    case robotMovement.right: {
+      if (checkIsFree(leftPosition, true)) handleGo('left')
+      else handleGo('none')
+      break
+    }
+    default: {
+      if (checkIsFree(topPosition, true)) handleGo('top')
+      else if (checkIsFree(leftPosition, true)) handleGo('left')
+      else if (checkIsFree(rightPosition, true)) handleGo('right')
+      else if (checkIsFree(bottomPosition, true)) handleGo('bottom')
+      else handleGo('none')
+      break
+    }
+  }
+}
 
 const draw = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D | null) => {
   if (!ctx) return
@@ -145,61 +219,68 @@ const draw = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D | null) =
 
   drawWorld(ctx)
   drawRobot(ctx)
-  drawFurniture(ctx)
 
-  const tileXPosition = Math.floor(xPosition / TILE_AREA) - 1
-  const tileYPosition = Math.floor(yPosition / TILE_AREA) - 1
+  const { xTilePosition, yTilePosition } = getTilePosition()
+  if (world[xTilePosition][yTilePosition] === objects.dust) world[xTilePosition][yTilePosition] = objects.empty
 
-  // console.log({
-  //   xPosition,
-  //   yPosition,
-  //   tileXPosition,
-  //   tileYPosition,
-  //   xSpeed,
-  //   ySpeed,
-  //   canvasWidth: canvas.width,
-  //   canvasHeight: canvas.height,
-  // })
+  const { topPosition, bottomPosition, leftPosition, rightPosition } = getPositions()
 
-  if (robotDirection === robotMovement.forward) {
-    if (checkIsFree(world[tileXPosition][tileYPosition - 1])) {
-      robotDirection = robotMovement.forward
-      xSpeed = 0
-      ySpeed = -DEFAULT_SPEED
-    } else if (checkIsFree(world[tileXPosition - 1][tileYPosition])) {
-      robotDirection = robotMovement.left
-      xSpeed = -DEFAULT_SPEED
-      ySpeed = 0
-    } else if (checkIsFree(world[tileXPosition + 1][tileYPosition])) {
-      robotDirection = robotMovement.right
-      xSpeed = DEFAULT_SPEED
-      ySpeed = 0
-    } else {
-      robotDirection = robotMovement.backward
-      xSpeed = 0
-      ySpeed = -DEFAULT_SPEED
+  switch (robot.direction) {
+    case robotMovement.forward: {
+      if (checkIsFree(topPosition)) handleGo('top')
+      else if (checkIsFree(leftPosition)) handleGo('left')
+      else if (checkIsFree(rightPosition)) handleGo('right')
+      else if (checkIsFree(bottomPosition)) handleGo('bottom')
+      else goBack()
+      break
+    }
+    case robotMovement.backward: {
+      if (checkIsFree(bottomPosition)) handleGo('bottom')
+      else if (checkIsFree(leftPosition)) handleGo('left')
+      else if (checkIsFree(rightPosition)) handleGo('right')
+      else if (checkIsFree(topPosition)) handleGo('top')
+      else goBack()
+      break
+    }
+    case robotMovement.left: {
+      if (checkIsFree(leftPosition)) handleGo('left')
+      else if (checkIsFree(topPosition)) handleGo('top')
+      else if (checkIsFree(bottomPosition)) handleGo('bottom')
+      else if (checkIsFree(rightPosition)) handleGo('right')
+      else goBack()
+      break
+    }
+    case robotMovement.right: {
+      if (checkIsFree(rightPosition)) handleGo('right')
+      else if (checkIsFree(topPosition)) handleGo('top')
+      else if (checkIsFree(bottomPosition)) handleGo('bottom')
+      else if (checkIsFree(leftPosition)) handleGo('left')
+      else goBack()
+      break
+    }
+    default: {
+      if (checkIsFree(topPosition)) handleGo('top')
+      else if (checkIsFree(leftPosition)) handleGo('left')
+      else if (checkIsFree(rightPosition)) handleGo('right')
+      else if (checkIsFree(bottomPosition)) handleGo('bottom')
+      else goBack()
+      break
     }
   }
 
-  if (xPosition + xSpeed < vacuumArea) {
-    ySpeed = -DEFAULT_SPEED
-    xSpeed = 0
-  }
-  if (xPosition + xSpeed > canvas.width) {
-    ySpeed = DEFAULT_SPEED
-    xSpeed = 0
-  }
-  if (yPosition + ySpeed < vacuumArea) {
-    ySpeed = 0
-    xSpeed = DEFAULT_SPEED
-  }
-  if (yPosition + ySpeed > canvas.height) {
-    ySpeed = 0
-    xSpeed = -DEFAULT_SPEED
-  }
+  robot.xPosition += robot.xSpeed
+  robot.yPosition += robot.ySpeed
 
-  xPosition += xSpeed
-  yPosition += ySpeed
+  // console.log({
+  //   robot.xPosition,
+  //   robot.yPosition,
+  //   xTilePosition,
+  //   tileYPosition,
+  //   robot.xSpeed,
+  //   robot.ySpeed,
+  //   canvasWidth: canvas.width,
+  //   canvasHeight: canvas.height,
+  // })
 }
 
 const Home: NextPage = () => {
@@ -217,7 +298,7 @@ const Home: NextPage = () => {
     loadRobotMemory()
     // loadDustAtWorld()
 
-    interval = setInterval(() => draw(canvas, ctx), 1000)
+    interval = setInterval(() => draw(canvas, ctx), 800)
     return () => clearInterval(interval)
   }, [canvasRef])
 
@@ -228,7 +309,7 @@ const Home: NextPage = () => {
         <meta name="description" content="Vacuum Cleaner" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <canvas ref={canvasRef} width="300" height="300" className={classes.canvas}>
+      <canvas ref={canvasRef} width="512" height="512" className={classes.canvas}>
         <p>It was not possible load the canvas</p>
       </canvas>
     </main>
