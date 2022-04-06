@@ -1,15 +1,15 @@
 import { Chromosome, IndexedChromosome, Item, Population } from './types'
 
-const generations = 5
+const generationsCount = 5
 const knapsackMaxWeight = 15
 
-const mockedPopulation = [
+/* const mockedPopulation = [
   [1, 0, 0, 1, 1],
   [1, 1, 1, 1, 1],
   [0, 0, 0, 0, 0],
   [0, 1, 0, 0, 1],
   [1, 0, 0, 0, 0],
-]
+] */
 
 const itens: Item[] = [
   { value: 4, weight: 12 },
@@ -27,7 +27,7 @@ const makeChromosome = (itens: Item[]) => {
 
 const makePopulation = () => {
   const population: Population = []
-  for (let i = 0; i < generations; i++) population.push(makeChromosome(itens))
+  for (let i = 0; i < generationsCount; i++) population.push(makeChromosome(itens))
   return population
 }
 
@@ -60,10 +60,12 @@ const rouletteWheel = (population: Population, fitnesses: number[]) => {
 }
 
 const makeCrossover = (chromosome1: IndexedChromosome, chromosome2: IndexedChromosome) => {
-  const crossoverPoint = Math.floor(Math.random() * chromosome1.chromosome.length)
+  const chromosomeLength = chromosome1.chromosome.length
+  const crossoverPoint = Math.floor(Math.random() * chromosomeLength)
   const offSpring1: IndexedChromosome = { index: chromosome1.index, chromosome: [] }
   const offSpring2: IndexedChromosome = { index: chromosome2.index, chromosome: [] }
-  for (let i = 0; i < chromosome1.chromosome.length; i++) {
+
+  for (let i = 0; i < chromosomeLength; i++) {
     if (i < crossoverPoint) {
       offSpring1.chromosome.push(chromosome1.chromosome[i])
       offSpring2.chromosome.push(chromosome2.chromosome[i])
@@ -72,17 +74,18 @@ const makeCrossover = (chromosome1: IndexedChromosome, chromosome2: IndexedChrom
       offSpring2.chromosome.push(chromosome1.chromosome[i])
     }
   }
+
   return { offSpring1, offSpring2 }
 }
 
-const makeMutation = (chromosome: Chromosome) => {
+const makeMutation = ({ index, chromosome }: IndexedChromosome): IndexedChromosome => {
   const mutationPoint = Math.floor(Math.random() * chromosome.length)
   const mutatedChromosome: number[] = []
   for (let i = 0; i < chromosome.length; i++) {
     if (i === mutationPoint) mutatedChromosome.push(chromosome[i] === 0 ? 1 : 0)
     else mutatedChromosome.push(chromosome[i])
   }
-  return mutatedChromosome
+  return { index, chromosome: mutatedChromosome }
 }
 
 const getRandomChromosome = (population: Population): IndexedChromosome => {
@@ -91,9 +94,9 @@ const getRandomChromosome = (population: Population): IndexedChromosome => {
 }
 
 const handleGeneration = () => {
-  const population = /* makePopulation() */ mockedPopulation
+  const population = makePopulation() /* mockedPopulation */
   const fitnesses = population.map(chromosome => fitness(chromosome))
-  const selectedChromosomes: number[][] = []
+  const selectedChromosomes: Population = []
   for (let i = 0; i < fitnesses.length; i++) {
     const selectedChromosome = rouletteWheel(population, fitnesses)
     selectedChromosomes.push(selectedChromosome)
@@ -104,11 +107,24 @@ const handleGeneration = () => {
     getRandomChromosome(selectedChromosomes)
   )
 
-  // population.splice(offSpring1.index, 1, offSpring1.chromosome)
-  // population.splice(offSpring2.index, 1, offSpring2.chromosome)
+  selectedChromosomes.splice(offSpring1.index, 1, offSpring1.chromosome)
+  selectedChromosomes.splice(offSpring2.index, 1, offSpring2.chromosome)
 
-  // const mutatedOffSpring1 = Math.random() > 0.7 ? makeMutation(offSpring1) : offSpring1
-  console.log({ population, fitnesses, selectedChromosomes })
+  const randomChromosome = getRandomChromosome(selectedChromosomes)
+  const mutatedChromosome = Math.random() > 0.7 ? makeMutation(randomChromosome) : randomChromosome
+
+  selectedChromosomes.splice(mutatedChromosome.index, 1, mutatedChromosome.chromosome)
+
+  return selectedChromosomes
 }
 
-handleGeneration()
+const main = () => {
+  const generations: { index: number; population: Population }[] = []
+  for (let i = 0; i < generationsCount; i++) {
+    const population = handleGeneration()
+    generations.push({ index: i + 1, population })
+  }
+  console.log(generations)
+}
+
+main()
