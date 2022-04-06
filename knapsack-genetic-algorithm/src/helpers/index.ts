@@ -1,17 +1,18 @@
-import { Chromosome, IndexedChromosome, Item, Population } from './types'
+import { Chromosome, Generation, IndexedChromosome, Item, KnapsackSolution, Population } from './types'
 
-const generationsCount = 5
-const knapsackMaxWeight = 15
+const GENERATIONS_COUNT = 5
+const CHROMOSOMES_COUNT = 5
+const KNAPSACK_MAX_WEIGHT = 15
 
-/* const mockedPopulation = [
+const mockedPopulation = [
   [1, 0, 0, 1, 1],
   [1, 1, 1, 1, 1],
   [0, 0, 0, 0, 0],
   [0, 1, 0, 0, 1],
   [1, 0, 0, 0, 0],
-] */
+]
 
-const itens: Item[] = [
+const items: Item[] = [
   { value: 4, weight: 12 },
   { value: 2, weight: 2 },
   { value: 2, weight: 1 },
@@ -19,31 +20,29 @@ const itens: Item[] = [
   { value: 10, weight: 4 },
 ]
 
-const makeChromosome = (itens: Item[]) => {
+const makeChromosome = (items: Item[]) => {
   const chromosome: Chromosome = []
-  for (let i = 0; i < itens.length; i++) chromosome.push(Math.round(Math.random()))
+  for (let i = 0; i < items.length; i++) chromosome.push(Math.round(Math.random()))
   return chromosome
 }
 
 const makePopulation = () => {
   const population: Population = []
-  for (let i = 0; i < generationsCount; i++) population.push(makeChromosome(itens))
+  for (let i = 0; i < CHROMOSOMES_COUNT; i++) population.push(makeChromosome(items))
   return population
 }
 
 const fitness = (chromosome: Chromosome) => {
   let totalValue = 0
   const totalWeight = chromosome.reduce((acc, gene, index) => {
-    if (!gene) return acc
-    totalValue += itens[index].value
-    return acc + itens[index].weight
+    if (gene === 0) return acc
+    totalValue += items[index].value
+    return acc + items[index].weight
   }, 0)
-  if (totalWeight > knapsackMaxWeight || totalValue === 0) return 1
-  return totalValue
+  return totalWeight > KNAPSACK_MAX_WEIGHT ? 0 : totalValue
 }
 
-const rouletteWheel = (population: Population, fitnesses: number[]) => {
-  const totalFitness = fitnesses.reduce((acc, fitness) => acc + fitness, 0)
+const rouletteWheel = (population: Population, fitnesses: number[], totalFitness: number) => {
   const probabilities = fitnesses.map(fitness => fitness / totalFitness)
 
   const roulette: number[] = []
@@ -90,12 +89,15 @@ const getRandomChromosome = (population: Population): IndexedChromosome => {
   return { index, chromosome: population[index] }
 }
 
-const handleGeneration = () => {
-  const population = makePopulation() /* mockedPopulation */
+const handleGeneration = (lastPopulation?: Population) => {
+  const population = lastPopulation ?? /* makePopulation() */ mockedPopulation
   const fitnesses = population.map(chromosome => fitness(chromosome))
+  console.log({ population, fitnesses })
+  const totalFitness = fitnesses.reduce((acc, fitness) => acc + fitness, 0)
+
   const selectedChromosomes: Population = []
   for (let i = 0; i < fitnesses.length; i++) {
-    const selectedChromosome = rouletteWheel(population, fitnesses)
+    const selectedChromosome = rouletteWheel(population, fitnesses, totalFitness)
     selectedChromosomes.push(selectedChromosome)
   }
 
@@ -112,16 +114,20 @@ const handleGeneration = () => {
 
   selectedChromosomes.splice(mutatedChromosome.index, 1, mutatedChromosome.chromosome)
 
-  return selectedChromosomes
-}
-
-const main = () => {
-  const generations: { index: number; population: Population }[] = []
-  for (let i = 0; i < generationsCount; i++) {
-    const population = handleGeneration()
-    generations.push({ index: i + 1, population })
+  return {
+    population: { chromosomes: selectedChromosomes, fitnesses },
+    totalFitness,
   }
-  console.log(generations)
 }
 
-main()
+export const solveKnapsack = (): KnapsackSolution => {
+  const generations: Generation[] = []
+  const { population, totalFitness } = handleGeneration()
+  generations.push({ index: 1, population, totalFitness })
+
+  for (let i = 1; i < GENERATIONS_COUNT; i++) {
+    const { population, totalFitness } = handleGeneration()
+    generations.push({ index: i + 1, population, totalFitness })
+  }
+  return { generations, items }
+}
