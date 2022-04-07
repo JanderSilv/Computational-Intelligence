@@ -80,29 +80,37 @@ type Props = {
 const Home: NextPage<Props> = ({ knapsack }) => {
   const [knapsackState, setKnapsackState] = useState(knapsack)
   const [populationSize, setPopulationSize] = useState('10')
+  const [generationsCount, setGenerationsCount] = useState('50')
   const [mutationTax, setMutationTax] = useState('30')
 
   const { generations, initialGeneration, items, mutations } = knapsackState
 
   const handlePopulationSize = (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target
-    if (value.length > 3) return
-    const nValue = Number(value)
-    if (nValue < 8) return setPopulationSize('8')
-    if (nValue > 20) return setPopulationSize('20')
-    setPopulationSize(value)
+    if (value.length > 3 || !value) return
+    setPopulationSize(formatNumber(value))
+  }
+
+  const handleGenerationsCount = (event: ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target
+    if (value.length > 3 || !value) return
+    setGenerationsCount(formatNumber(value))
   }
 
   const handleMutationTaxChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target
     if (value.length > 3) return
-    if (Number(value) > 100) return setMutationTax('100')
     setMutationTax(formatNumber(value))
   }
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
-    setKnapsackState(solveKnapsack(Number(populationSize), Number(mutationTax) / 100))
+    const options = {
+      populationSize: Number(populationSize),
+      maxGenerations: Math.floor(Number(generationsCount) / 2),
+      mutationTax: Number(mutationTax) / 100,
+    }
+    setKnapsackState(solveKnapsack(options))
   }
 
   return (
@@ -134,6 +142,22 @@ const Home: NextPage<Props> = ({ knapsack }) => {
               min={8}
               max={20}
               maxLength={3}
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="generations-count-input">Quantidade de Gerações (5~100):</label>
+            <input
+              id="generations-count-input"
+              type="number"
+              value={generationsCount}
+              onChange={handleGenerationsCount}
+              placeholder="Gerações"
+              min={5}
+              max={100}
+              maxLength={3}
+              required
             />
           </div>
 
@@ -148,6 +172,7 @@ const Home: NextPage<Props> = ({ knapsack }) => {
                 min={1}
                 max={100}
                 maxLength={3}
+                required
               />
             </div>
           </div>

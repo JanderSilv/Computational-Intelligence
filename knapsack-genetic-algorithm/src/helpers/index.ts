@@ -1,6 +1,15 @@
-import { Chromosome, Generation, IndexedChromosome, Item, KnapsackSolution, Mutation, Population } from './types'
+import {
+  Chromosome,
+  Generation,
+  IndexedChromosome,
+  Item,
+  KnapsackSolution,
+  Mutation,
+  Options,
+  Population,
+} from './types'
 
-let MAX_GENERATIONS = 50
+let MAX_GENERATIONS = 50 / 2
 let CHROMOSOMES_COUNT = 10
 let KNAPSACK_MAX_WEIGHT = 15
 let MUTATION_TAX = 0.3
@@ -153,11 +162,13 @@ const handleMutation = (population: Population) => {
   return { population: auxPopulation, totalFitness: totalFinalFitness }
 }
 
-export const solveKnapsack = (chromosomesCount?: number, taxMutation?: number): KnapsackSolution => {
+export const solveKnapsack = (options?: Options): KnapsackSolution => {
   generationsCount = 1
   mutations = []
-  if (chromosomesCount) CHROMOSOMES_COUNT = chromosomesCount
-  if (taxMutation) MUTATION_TAX = taxMutation
+
+  if (options?.chromosomesCount) CHROMOSOMES_COUNT = options.chromosomesCount
+  if (options?.taxMutation) MUTATION_TAX = options.taxMutation
+  if (options?.maxGenerations) MAX_GENERATIONS = options.maxGenerations
 
   const { initialPopulation, initialTotalFitness } = makeInitialPopulation()
   let currentPopulation = initialPopulation

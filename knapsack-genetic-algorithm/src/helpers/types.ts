@@ -19,3 +19,9 @@ export type KnapsackSolution = {
   items: Item[]
   mutations: Mutation[]
 }
+
+export type Options = {
+  chromosomesCount?: number
+  taxMutation?: number
+  maxGenerations?: number
+}
