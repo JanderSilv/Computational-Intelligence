@@ -112,10 +112,10 @@ const Home: NextPage<Props> = ({ knapsack }) => {
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
-    const options = {
-      populationSize: Number(populationSize),
+    const options: Options = {
+      chromosomesCount: Number(populationSize),
       maxGenerations: Math.floor(Number(generationsCount) / 2),
-      mutationTax: Number(mutationTax) / 100,
+      taxMutation: Number(mutationTax) / 100,
     }
     setKnapsackState(solveKnapsack(options))
   }
@@ -177,10 +177,11 @@ const Home: NextPage<Props> = ({ knapsack }) => {
             <div className={classes['mutation-tax-input__wrap']}>
               <input
                 id="mutation-tax-input"
+                type="number"
                 value={mutationTax}
                 onChange={handleMutationTaxChange}
                 placeholder="Taxa de mutação"
-                min={1}
+                min={0}
                 max={100}
                 maxLength={3}
                 required

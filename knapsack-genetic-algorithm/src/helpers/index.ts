@@ -13,7 +13,7 @@ import {
 let MAX_GENERATIONS = 50 / 2
 let CHROMOSOMES_COUNT = 10
 let KNAPSACK_MAX_WEIGHT = 15
-let MUTATION_TAX = 0.3
+const MUTATION_TAX = 0.3
 
 let generationsCount = 1
 let crossovers: Crossover[] = []
@@ -175,11 +175,12 @@ export const solveKnapsack = (options?: Options): KnapsackSolution => {
   mutations = []
 
   if (options?.chromosomesCount) CHROMOSOMES_COUNT = options.chromosomesCount
-  if (options?.taxMutation) MUTATION_TAX = options.taxMutation
   if (options?.maxGenerations) MAX_GENERATIONS = options.maxGenerations
 
   const { initialPopulation, initialTotalFitness } = makeInitialPopulation()
   let currentPopulation = initialPopulation
+
+  const taxMutation = options?.taxMutation !== undefined ? options.taxMutation : MUTATION_TAX
 
   const generations: Generation[] = []
   for (let i = generationsCount; i < MAX_GENERATIONS; i++) {
@@ -190,7 +191,8 @@ export const solveKnapsack = (options?: Options): KnapsackSolution => {
     const { population: crossoverPopulation, totalFitness: crossoverTotalFitness } = handleCrossover(population)
     generationsCount++
 
-    if (Math.random() > 1 - MUTATION_TAX) {
+    const random = Math.random()
+    if (random < taxMutation && taxMutation != 0) {
       const { population: mutationPopulation, totalFitness: mutationTotalFitness } = handleMutation(crossoverPopulation)
       generations.push({ index: generationsCount, population: mutationPopulation, totalFitness: mutationTotalFitness })
       currentPopulation = mutationPopulation
