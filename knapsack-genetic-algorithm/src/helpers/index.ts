@@ -134,7 +134,7 @@ const handleSelection = (population: Population) => {
 }
 
 const handleCrossover = (population: Population) => {
-  const auxPopulation: Population = population
+  const auxPopulation: Population = [...population]
 
   const randomChromosome1 = getRandomChromosome(auxPopulation)
   const randomChromosome2 = getRandomChromosome(auxPopulation, randomChromosome1.index)
@@ -153,7 +153,7 @@ const handleCrossover = (population: Population) => {
 }
 
 const handleMutation = (population: Population) => {
-  const auxPopulation: Population = population
+  const auxPopulation: Population = [...population]
   const mutatedChromosome = makeMutation(getRandomChromosome(auxPopulation))
   auxPopulation.splice(mutatedChromosome.index, 1, mutatedChromosome)
 
