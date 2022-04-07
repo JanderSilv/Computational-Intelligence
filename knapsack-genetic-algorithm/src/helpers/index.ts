@@ -1,9 +1,12 @@
-import { Chromosome, Generation, IndexedChromosome, Item, KnapsackSolution, Population } from './types'
+import { Chromosome, Generation, IndexedChromosome, Item, KnapsackSolution, Mutation, Population } from './types'
 
-let GENERATIONS_COUNT = 50
+let MAX_GENERATIONS = 50
 let CHROMOSOMES_COUNT = 10
 let KNAPSACK_MAX_WEIGHT = 15
 let MUTATION_TAX = 0.3
+
+let generationsCount = 1
+let mutations: Mutation[] = []
 
 const items: Item[] = [
   { value: 4, weight: 12 },
@@ -92,12 +95,13 @@ const makeCrossover = (chromosome1: IndexedChromosome, chromosome2: IndexedChrom
   return { offSpring1, offSpring2 }
 }
 
-const makeMutation = ({ chromosome, ...rest }: IndexedChromosome): IndexedChromosome => {
+const makeMutation = ({ index, chromosome }: IndexedChromosome): IndexedChromosome => {
   const mutationPoint = Math.floor(Math.random() * chromosome.length)
   const mutatedChromosome: Chromosome = chromosome
   mutatedChromosome[mutationPoint] = mutatedChromosome[mutationPoint] === 1 ? 0 : 1
+  mutations.push({ generation: generationsCount, chromosomeIndex: index + 1 })
 
-  return { ...rest, chromosome: mutatedChromosome, fitness: makeFitness(mutatedChromosome) }
+  return { index, chromosome: mutatedChromosome, fitness: makeFitness(mutatedChromosome) }
 }
 
 const getRandomChromosome = (population: Population, lastChosenChromosomeIndex?: number): IndexedChromosome => {
@@ -150,15 +154,16 @@ const handleMutation = (population: Population) => {
 }
 
 export const solveKnapsack = (chromosomesCount?: number, taxMutation?: number): KnapsackSolution => {
+  generationsCount = 1
+  mutations = []
   if (chromosomesCount) CHROMOSOMES_COUNT = chromosomesCount
   if (taxMutation) MUTATION_TAX = taxMutation
 
   const { initialPopulation, initialTotalFitness } = makeInitialPopulation()
   let currentPopulation = initialPopulation
-  let generationsCount = 1
 
   const generations: Generation[] = []
-  for (let i = generationsCount; i < GENERATIONS_COUNT; i++) {
+  for (let i = generationsCount; i < MAX_GENERATIONS; i++) {
     const { population, totalFitness } = handleSelection(currentPopulation)
     generationsCount++
     generations.push({ index: generationsCount, population, totalFitness })
@@ -184,5 +189,6 @@ export const solveKnapsack = (chromosomesCount?: number, taxMutation?: number): 
     initialGeneration: { index: 1, population: initialPopulation, totalFitness: initialTotalFitness },
     generations,
     items,
+    mutations,
   }
 }
