@@ -1,0 +1,73 @@
+.wrap {
+  width: 80%;
+  max-width: 1280px;
+  margin: 2rem auto;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+}
+.wrap > h1 {
+  text-align: center;
+}
+
+.initial-data {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 4rem;
+}
+
+.inputs-form > :is(div, button) {
+  margin-top: 1rem;
+}
+
+.mutation-tax-input__wrap {
+  width: fit-content;
+  height: fit-content;
+  position: relative;
+}
+.mutation-tax-input__wrap::before {
+  content: "%";
+  position: absolute;
+  top: calc(50% - 1px);
+  right: 6px;
+  transform: translateY(-50%);
+}
+
+section.process {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 1rem;
+}
+section.process > section {
+  border-top: 1px solid gray;
+}
+section.process > section:first-child {
+  flex: 3;
+}
+
+.generations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 4rem;
+}
+
+section.mutations {
+  border-left: 1px solid gray;
+  padding-left: 2rem;
+  flex: 1;
+  position: relative;
+}
+section.mutations > div {
+  position: sticky;
+  top: 20px;
+}
+.mutations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem 1rem;
+}
+.mutations-list > li {
+  font-size: 14px;
+}
