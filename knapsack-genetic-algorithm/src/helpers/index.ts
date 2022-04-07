@@ -54,7 +54,7 @@ const makeInitialPopulation = () => {
     const chromosome = makeChromosome(items)
     initialPopulation.push({ chromosome, fitness: makeFitness(chromosome) })
   }
-  // console.log('The initial population was:', population)
+
   return { initialPopulation, initialTotalFitness: makeTotalFitness(initialPopulation) }
 }
 
@@ -70,15 +70,14 @@ const rouletteWheel = (population: Population, totalFitness: number) => {
 
   const random = Math.random()
   const foundIndex = roulette.findIndex(value => random <= value)
-  // console.log({ roulette, random, foundIndex })
-  // console.log('The selected chromosome was:', foundIndex)
+
   return population[foundIndex]
 }
 
 const makeCrossover = (chromosome1: IndexedChromosome, chromosome2: IndexedChromosome) => {
   const chromosomeLength = chromosome1.chromosome.length
   const crossoverPoint = Math.floor(Math.random() * chromosomeLength)
-  // console.log('The crossover point was:', crossoverPoint)
+
   const offSpring1: IndexedChromosome = {
     index: chromosome1.index,
     chromosome: [],
@@ -147,13 +146,9 @@ const handleCrossover = (population: Population) => {
   const randomChromosome1 = getRandomChromosome(auxPopulation)
   const randomChromosome2 = getRandomChromosome(auxPopulation, randomChromosome1.index)
 
-  // console.log('The selected chromosomes to the crossover were:', randomChromosome1.index, randomChromosome2.index)
-
   const { offSpring1, offSpring2 } = makeCrossover(randomChromosome1, randomChromosome2)
   auxPopulation.splice(offSpring1.index, 1, offSpring1)
   auxPopulation.splice(offSpring2.index, 1, offSpring2)
-
-  // console.log('The generated chromosomes from the crossover were:', offSpring1.chromosome, offSpring2.chromosome)
 
   const totalFinalFitness = makeTotalFitness(auxPopulation)
 
