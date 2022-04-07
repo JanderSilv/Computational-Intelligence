@@ -34,6 +34,11 @@
   transform: translateY(-50%);
 }
 
+section.chart {
+  max-width: 100%;
+  flex: 2;
+}
+
 section.process {
   margin-top: 2rem;
   display: flex;

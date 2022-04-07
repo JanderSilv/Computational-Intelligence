@@ -1,6 +1,17 @@
 import { useState, ChangeEvent, FormEvent } from 'react'
 import type { GetStaticProps, NextPage } from 'next'
 import Head from 'next/head'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+import { Line } from 'react-chartjs-2'
 
 import { solveKnapsack } from 'src/helpers'
 import { Generation as TGeneration, Item as TItem, KnapsackSolution } from 'src/helpers/types'
@@ -28,6 +39,37 @@ const Generation = (props: TGeneration) => {
       </ol>
       <p>Total Fitness: R$ {totalFitness}</p>
     </div>
+  )
+}
+
+type FitnessesChartProps = { generations: TGeneration[] }
+
+const FitnessesChart = ({ generations }: FitnessesChartProps) => {
+  ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: false },
+    },
+  }
+  const data = {
+    labels: generations.map(({ index }) => `Geração ${index}`),
+    datasets: [
+      {
+        label: `Fitnesses`,
+        data: generations.map(({ totalFitness }) => totalFitness),
+        borderColor: 'rgb(53, 162, 235)',
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+      },
+    ],
+  }
+
+  return (
+    <section className={classes.chart}>
+      <Line options={options} data={data} />
+    </section>
   )
 }
 
@@ -112,6 +154,8 @@ const Home: NextPage<Props> = ({ knapsack }) => {
 
           <button type="submit">Executar</button>
         </form>
+
+        <FitnessesChart generations={[initialGeneration, ...generations]} />
       </section>
 
       <section className={classes.process}>
