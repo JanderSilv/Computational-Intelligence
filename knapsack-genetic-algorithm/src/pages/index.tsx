@@ -173,11 +173,14 @@ const Home: NextPage<Props> = ({ knapsack }) => {
         <section className={classes.mutations}>
           <div>
             <h2>Mutações:</h2>
-            <ul className={classes['mutations-list']}>
+            <p>Geração - Cromossomo - Gene</p>
+            <ol className={classes['mutations-list']}>
               {mutations.map((mutation, index) => (
-                <li key={index}>{`Geração ${mutation.generation} - Cromossomo ${mutation.chromosomeIndex}`}</li>
+                <li
+                  key={index}
+                >{`G${mutation.generation} - C${mutation.chromosomeIndex} - G${mutation.mutationPoint}`}</li>
               ))}
-            </ul>
+            </ol>
           </div>
         </section>
       </section>

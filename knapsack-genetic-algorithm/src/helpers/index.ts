@@ -99,7 +99,7 @@ const makeMutation = ({ index, chromosome }: IndexedChromosome): IndexedChromoso
   const mutationPoint = Math.floor(Math.random() * chromosome.length)
   const mutatedChromosome: Chromosome = chromosome
   mutatedChromosome[mutationPoint] = mutatedChromosome[mutationPoint] === 1 ? 0 : 1
-  mutations.push({ generation: generationsCount, chromosomeIndex: index + 1 })
+  mutations.push({ generation: generationsCount, chromosomeIndex: index + 1, mutationPoint: mutationPoint + 1 })
 
   return { index, chromosome: mutatedChromosome, fitness: makeFitness(mutatedChromosome) }
 }

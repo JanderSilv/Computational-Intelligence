@@ -11,7 +11,7 @@ export type Population = ChromosomeWFitness[]
 
 export type Generation = { index: number; population: Population; totalFitness: number }
 
-export type Mutation = { generation: number; chromosomeIndex: number }
+export type Mutation = { generation: number; chromosomeIndex: number; mutationPoint: number }
 
 export type KnapsackSolution = {
   initialGeneration: Generation
