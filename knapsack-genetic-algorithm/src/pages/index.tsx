@@ -1,6 +1,7 @@
 import { useState, ChangeEvent, FormEvent } from 'react'
 import type { GetStaticProps, NextPage } from 'next'
 import Head from 'next/head'
+import Image from 'next/image'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +15,9 @@ import {
 import { Line } from 'react-chartjs-2'
 
 import { solveKnapsack } from 'src/helpers'
-import { Generation as TGeneration, Item as TItem, KnapsackSolution } from 'src/helpers/types'
+import { Generation as TGeneration, Item as TItem, KnapsackSolution, Options } from 'src/helpers/types'
+
+import { Accordion } from 'src/components/accordion'
 import classes from 'src/styles/home.module.css'
 
 const removeNonNumeric = (num: string) => num.toString().replace(/[^0-9]/g, '')
@@ -82,8 +85,12 @@ const Home: NextPage<Props> = ({ knapsack }) => {
   const [populationSize, setPopulationSize] = useState('10')
   const [generationsCount, setGenerationsCount] = useState('50')
   const [mutationTax, setMutationTax] = useState('30')
+  const [accordionStates, setAccordionStates] = useState({
+    crossover: true,
+    mutation: true,
+  })
 
-  const { generations, initialGeneration, items, mutations } = knapsackState
+  const { generations, initialGeneration, items, mutations, crossovers } = knapsackState
 
   const handlePopulationSize = (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target
@@ -111,6 +118,10 @@ const Home: NextPage<Props> = ({ knapsack }) => {
       mutationTax: Number(mutationTax) / 100,
     }
     setKnapsackState(solveKnapsack(options))
+  }
+
+  const handleAccordion = (name: keyof typeof accordionStates) => {
+    setAccordionStates({ ...accordionStates, [name]: !accordionStates[name] })
   }
 
   return (
@@ -195,17 +206,55 @@ const Home: NextPage<Props> = ({ knapsack }) => {
           </div>
         </section>
 
-        <section className={classes.mutations}>
+        <section className={classes.operations}>
           <div>
-            <h2>Mutações:</h2>
-            <p>Geração - Cromossomo - Gene</p>
-            <ol className={classes['mutations-list']}>
-              {mutations.map((mutation, index) => (
-                <li
-                  key={index}
-                >{`G${mutation.generation} - C${mutation.chromosomeIndex} - G${mutation.mutationPoint}`}</li>
-              ))}
-            </ol>
+            <div>
+              <button
+                onClick={() => handleAccordion('crossover')}
+                className={[
+                  classes['operations__button'],
+                  accordionStates.crossover ? classes['operations__button--open'] : '',
+                ].join(' ')}
+              >
+                <h2>Crossovers</h2>
+                <Image src="/chevron-down.svg" width={12} height={8} alt="seta para baixo" />
+              </button>
+              <Accordion isOpen={accordionStates.crossover}>
+                <p>Geração - Cromossomos - Ponto de corte</p>
+                <ol className={classes['operations-list']}>
+                  {crossovers.map((crossover, index) => (
+                    <li key={index}>
+                      {`G${crossover.generation} - C[${crossover.chromosomes.join(', ')}] - P${
+                        crossover.crossoverPoint
+                      }`}
+                    </li>
+                  ))}
+                </ol>
+              </Accordion>
+            </div>
+
+            <div style={{ marginTop: '1rem' }}>
+              <button
+                onClick={() => handleAccordion('mutation')}
+                className={[
+                  classes['operations__button'],
+                  accordionStates.mutation ? classes['operations__button--open'] : '',
+                ].join(' ')}
+              >
+                <h2>Mutações</h2>
+                <Image src="/chevron-down.svg" width={12} height={8} alt="seta para baixo" />
+              </button>
+              <Accordion isOpen={accordionStates.mutation}>
+                <p>Geração - Cromossomo - Gene</p>
+                <ol className={classes['operations-list']}>
+                  {mutations.map((mutation, index) => (
+                    <li key={index}>
+                      {`G${mutation.generation} - C${mutation.chromosomeIndex} - G${mutation.mutationPoint}`}
+                    </li>
+                  ))}
+                </ol>
+              </Accordion>
+            </div>
           </div>
         </section>
       </section>

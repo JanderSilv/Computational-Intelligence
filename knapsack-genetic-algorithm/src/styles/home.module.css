@@ -1,5 +1,5 @@
 .wrap {
-  width: 80%;
+  width: 90%;
   max-width: 1280px;
   margin: 2rem auto;
   padding: 1rem 2rem;
@@ -33,6 +33,11 @@
   right: 6px;
   transform: translateY(-50%);
 }
+.mutation-tax-input__wrap > input {
+  -moz-appearance: textfield;
+  -webkit-appearance: none;
+  appearance: textfield;
+}
 
 section.chart {
   max-width: 100%;
@@ -49,7 +54,7 @@ section.process > section {
   border-top: 1px solid gray;
 }
 section.process > section:first-child {
-  flex: 3;
+  flex: 2.5;
 }
 
 .generations {
@@ -58,22 +63,43 @@ section.process > section:first-child {
   gap: 1rem 4rem;
 }
 
-section.mutations {
+section.operations {
   border-left: 1px solid gray;
+  padding-block: 0.83rem;
   padding-left: 2rem;
   flex: 1;
   position: relative;
 }
-section.mutations > div {
+section.operations > div {
   position: sticky;
   top: 20px;
 }
-.mutations-list {
-  padding-left: 1.1rem;
+
+button.operations__button {
+  padding: 0.2rem;
+  border: none;
+  background: none;
+
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+button.operations__button > span {
+  transition: transform 0.3s ease-in-out;
+}
+button.operations__button--open > span {
+  transform: rotateZ(180deg);
+}
+button.operations__button > h2 {
+  margin: 0;
+}
+
+.operations-list {
+  padding-left: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem 1rem;
 }
-.mutations-list > li {
+.operations-list > li {
   font-size: 14px;
 }

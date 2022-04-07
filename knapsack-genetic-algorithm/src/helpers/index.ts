@@ -1,5 +1,6 @@
 import {
   Chromosome,
+  Crossover,
   Generation,
   IndexedChromosome,
   Item,
@@ -15,6 +16,7 @@ let KNAPSACK_MAX_WEIGHT = 15
 let MUTATION_TAX = 0.3
 
 let generationsCount = 1
+let crossovers: Crossover[] = []
 let mutations: Mutation[] = []
 
 const items: Item[] = [
@@ -100,6 +102,12 @@ const makeCrossover = (chromosome1: IndexedChromosome, chromosome2: IndexedChrom
 
   offSpring1.fitness = makeFitness(offSpring1.chromosome)
   offSpring2.fitness = makeFitness(offSpring2.chromosome)
+
+  crossovers.push({
+    generation: generationsCount,
+    chromosomes: [offSpring1.index, offSpring2.index],
+    crossoverPoint: crossoverPoint,
+  })
 
   return { offSpring1, offSpring2 }
 }
@@ -201,5 +209,6 @@ export const solveKnapsack = (options?: Options): KnapsackSolution => {
     generations,
     items,
     mutations,
+    crossovers,
   }
 }

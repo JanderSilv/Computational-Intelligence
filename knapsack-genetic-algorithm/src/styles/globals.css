@@ -36,3 +36,7 @@ input {
   margin-top: 0.4rem;
   display: block;
 }
+
+button {
+ cursor: pointer;
+}
