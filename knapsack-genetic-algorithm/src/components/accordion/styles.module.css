@@ -1,0 +1,9 @@
+div.accordion {
+  max-height: 0;
+  list-style: none;
+  transition: max-height 0.4s ease-in-out;
+  overflow: hidden;
+}
+div.accordion--open {
+  max-height: 500px;
+}
