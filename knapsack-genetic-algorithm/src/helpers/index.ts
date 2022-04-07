@@ -1,6 +1,6 @@
 import { Chromosome, Generation, IndexedChromosome, Item, KnapsackSolution, Population } from './types'
 
-const GENERATIONS_COUNT = 5
+const GENERATIONS_COUNT = 2
 const CHROMOSOMES_COUNT = 5
 const KNAPSACK_MAX_WEIGHT = 15
 
@@ -92,7 +92,7 @@ const getRandomChromosome = (population: Population): IndexedChromosome => {
 const handleGeneration = (lastPopulation?: Population) => {
   const population = lastPopulation ?? /* makePopulation() */ mockedPopulation
   const fitnesses = population.map(chromosome => fitness(chromosome))
-  console.log({ population, fitnesses })
+  // console.log({ population, fitnesses })
   const totalFitness = fitnesses.reduce((acc, fitness) => acc + fitness, 0)
 
   const selectedChromosomes: Population = []
@@ -101,10 +101,14 @@ const handleGeneration = (lastPopulation?: Population) => {
     selectedChromosomes.push(selectedChromosome)
   }
 
-  const { offSpring1, offSpring2 } = makeCrossover(
-    getRandomChromosome(selectedChromosomes),
-    getRandomChromosome(selectedChromosomes)
-  )
+  const randomChromosome1 = getRandomChromosome(selectedChromosomes)
+  const randomChromosome2 = getRandomChromosome(selectedChromosomes)
+
+  console.log('The chromosomes selected to the crossover were:', randomChromosome1.index, randomChromosome2.index)
+
+  const { offSpring1, offSpring2 } = makeCrossover(randomChromosome1, randomChromosome2)
+
+  console.log('The chromosomes generated after the crossover were:', offSpring1.chromosome, offSpring2.chromosome)
 
   selectedChromosomes.splice(offSpring1.index, 1, offSpring1.chromosome)
   selectedChromosomes.splice(offSpring2.index, 1, offSpring2.chromosome)
