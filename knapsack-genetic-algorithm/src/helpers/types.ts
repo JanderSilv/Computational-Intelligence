@@ -4,11 +4,11 @@ export type Item = {
 }
 
 export type Chromosome = number[]
-export type IndexedChromosome = { index: number; chromosome: Chromosome }
+export type ChromosomeWFitness = { chromosome: Chromosome; fitness: number }
+export type IndexedChromosome = ChromosomeWFitness & { index: number }
 
-export type Population = Chromosome[]
-export type FinalPopulation = { chromosomes: Chromosome[]; fitnesses: number[] }
+export type Population = ChromosomeWFitness[]
 
-export type Generation = { index: number; population: FinalPopulation; totalFitness: number }
+export type Generation = { index: number; population: Population; totalFitness: number }
 
-export type KnapsackSolution = { generations: Generation[]; items: Item[] }
+export type KnapsackSolution = { initialGeneration: Generation; generations: Generation[]; items: Item[] }
